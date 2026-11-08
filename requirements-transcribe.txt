@@ -1,0 +1,4 @@
+# Optional: audio transcription for Reels.
+# The pipeline works without it (caption + hashtags only), but topics are
+# much more accurate when the spoken content is included.
+faster-whisper>=1.0

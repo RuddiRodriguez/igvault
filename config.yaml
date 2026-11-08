@@ -1,0 +1,59 @@
+# igvault — configuration
+# Every value can also be overridden with environment variables (see .env.example).
+
+paths:
+  raw: data/raw          # Instaloader output: media files + metadata JSON
+  work: data/work        # Normalized records, transcripts, classification
+  library: library       # Final folder structure, one folder per discovered topic
+
+collect:
+  login: ""              # Instagram username (or set IGVAULT_LOGIN)
+  sessionfile: ""        # defaults to <work>/ig_session
+  dirname_pattern: saved
+  filename_pattern: "{date_utc:%Y-%m-%d}_{shortcode}"
+  videos_only: true      # only download Reels / video posts
+  limit: 0               # 0 = every saved video (use 20 to test)
+  fast_update: false     # stop at the first already-downloaded post
+
+transcribe:
+  enabled: auto          # auto | true | false
+  model: small           # tiny | base | small | medium | large-v3
+  device: auto           # auto | cpu | cuda
+  compute_type: int8
+  language: auto         # auto, or an ISO code such as en / es
+  min_chars: 20          # transcripts shorter than this count as "no speech"
+
+llm:
+  base_url: https://api.openai.com/v1
+  api_key_env: OPENAI_API_KEY
+  chat_model: gpt-5.6-luna        # describes and files each video
+  taxonomy_model: gpt-5.6-luna    # designs the topic folders (2 calls per run); blank = chat_model
+  reasoning_effort: low           # GPT-5 / o-series only: minimal | low | medium | high
+  embedding_model: text-embedding-3-small
+  temperature: 0.2
+  timeout: 90
+
+classify:
+  # With an LLM key, each video is described individually by the LLM (in English,
+  # whatever the caption language), the LLM designs the topic folders from those
+  # descriptions, then files every video. Descriptions are cached in
+  # data/work/descriptions.json so re-runs are cheap.
+  use_frames: true       # send 3 video frames to the LLM when the caption says little (needs ffmpeg)
+  describe_batch: 12
+  assign_batch: 30
+  # Optional: fix the folder list yourself instead of letting the LLM choose, e.g.
+  # topics:
+  #   - {name: Volleyball, description: volleyball drills, technique and highlights}
+  #   - {name: Home Workouts, description: fitness and exercise routines}
+  topics: []
+  clusters: auto         # auto, or a fixed number of topics
+  max_clusters: 12
+  min_cluster_size: 3
+  naming_samples: 8      # examples per cluster sent to the LLM for naming
+  naming_language: English
+  outlier_similarity: 0.0  # 0 = disabled; try 0.10 with OpenAI embeddings
+
+organize:
+  mode: copy             # copy | move | symlink
+  unsorted_name: Unsorted
+  write_info_md: true
